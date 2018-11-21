@@ -1,5 +1,6 @@
 # Ransac
-A flexible implementation of RANSAC in python that can be combined with custom estimator and distance functions. 
+A flexible implementation of RANSAC in Python that can be combined with custom estimator and distance functions. 
+
 Lars Jebe, 2018
 
 Currently, two modes of estiation are implemented:
