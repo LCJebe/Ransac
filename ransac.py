@@ -3,7 +3,16 @@ import random
 
 # main function for estimation of rigid body transform
 def findRigidBody(pts1, pts2, minPoints, numIter, thresh):
+    """ High level function to find rigid body transformation between two sets of points using RANSAC. 
+    INPUTS:  - pts1, pts2: two 3D point sets with corresponding points
+             - minPoints: number of points that are sampled in each iteration. Must be at least 3. 
+             - numIter: number of iterations
+             - thresh: reprojection threshold, distance / radius in which a match is regarded an inlier. 
+    RETURNS: - TF_ref: (refined) rigid body transformation matrix (4x4)
+             - mask: mask for all points that are inliers. 
+    """
     assert pts1.shape[1] == 3 and pts2.shape[1] == 3
+    assert min_points >=3
     estFunc = estimateRigidTransform
     distFunc = calcDistPointPoint
     
@@ -13,7 +22,17 @@ def findRigidBody(pts1, pts2, minPoints, numIter, thresh):
 
 # ransac as function, flexible (what it's estimating depends on estFunc and distFunc)
 def ransac(pts1, pts2, minPoints, numIter, thresh, estFunc, distFunc):
-
+    """ Main RANSAC function (designed specifically for rigid body transform, but can be used more flexibly).
+    INPUTS:  - pts1, pts2: Corresponding point sets
+             - minPoints: number of points that RANSAC samples in each iteration
+             - numIter: number of iterations
+             - thresh: reprojection threshold, distance / radius in which a match is regarded an inlier. 
+             - estFunc: an arbitrary function estimating the transform between two samples point sets
+             - distFunc: an arbitrary funtion returning the distance between projected points and correspondences
+    RETURNS: - TF_ref: (refined) estimated transformation matrix
+             - maxInlrRef: number of inliers
+             - mask: inlier mask
+    """
     N = pts1.shape[0]
     maxInlr = 0
     TF_ref = None
@@ -56,7 +75,11 @@ def ransac(pts1, pts2, minPoints, numIter, thresh, estFunc, distFunc):
 # distance calculation. calculates the distances between two sets of points 
 # assumes that there are correspondences and that r.g. the first point in pts1 corresponds to the first point in pts2
 def calcDistPointPoint(pts1, pts2, TF):
-
+    """ Implementation of distance calculation for two 3D point sets, given a 4x4 transformation
+    INPUTS:  - pts1, pts2: 3D point sets with correspondences (correspondences determined by order)
+             - TF: the 4x4 transformation applied to project pts2 into the reference frame of pts1
+    RETURNS: - d: distances between each point and its correspondence after transformation
+    """
     # homogeneous coordinates
     pts2_hom = np.append(pts2, np.ones((pts2.shape[0], 1)), axis=1)
     
@@ -73,6 +96,11 @@ def calcDistPointPoint(pts1, pts2, TF):
 
 # estimate rigid body transformation from two sets of point corespondeces. At least three point pairs required. 
 def estimateRigidTransform(pts1, pts2):
+    """ Estimates a least-quares rigid body transformation between two sets of 3D points with arbitrary number of points
+               (minimum is 3 points)
+    INPUTS:  - pts1, pts2: 3D corresponding points
+    RETURNS: - TF: the estimated transform. 
+    """
     N = pts1.shape[0]
     # we need at least 3 points
     if N < 3:
@@ -105,6 +133,12 @@ def estimateRigidTransform(pts1, pts2):
     
 # distance from a set of points to a plane defined by (normal, point)
 def distToPlane(pts, pts2, plane):
+    """ Calculates distance of each point in pts to the plane defined by plane. 
+    INPUTS:  - pts: points in arbitrary dimension (at least 2D)
+             - pts2: not used, dummy for compatibility with above RANSAC implementation
+             - plane: a plane / hyperplane defined by (normal, point)
+    RETURNS: - d: the distance of each point to the plane
+    """
     n, q = plane
     pts_q = pts-q
     d = np.dot(pts_q, n)
@@ -112,6 +146,11 @@ def distToPlane(pts, pts2, plane):
 
 # least squares estimation of a plane given three or more points in 3D
 def estimatePlane(pts, pts1):
+    """ Least squares estimation of a plane / hyperplane (plane fitting) for pts. 
+    INPUTS:  - pts: points that plane should be fitted to
+             - pts1: unused dummy. for compatibility with ransac implementation above. 
+    RETURNS: - plane: the estimated least squares plane in format (normal, point)
+    """
     N, dim = pts.shape
     assert dim == 3
     
