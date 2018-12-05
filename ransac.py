@@ -12,7 +12,7 @@ def findRigidBody(pts1, pts2, minPoints, numIter, thresh):
              - mask: mask for all points that are inliers. 
     """
     assert pts1.shape[1] == 3 and pts2.shape[1] == 3
-    assert min_points >=3
+    assert minPoints >=3
     estFunc = estimateRigidTransform
     distFunc = calcDistPointPoint
     
